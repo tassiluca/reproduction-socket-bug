@@ -1,0 +1,36 @@
+name: CI/CD Process
+on:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2025, macos-14, ubuntu-24.04]
+    runs-on: ${{ matrix.os }}
+    concurrency:
+      group: build-${{ github.workflow }}-${{ matrix.os }}-${{ github.event.number || github.ref }}
+      cancel-in-progress: true
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+      - uses: nicolasfara/build-check-deploy-sbt-action@1.0.22
+        with:
+          check-command: sbt +test
+          should-deploy: false
+  success:
+    runs-on: ubuntu-24.04
+    needs:
+      - build
+    if: >-
+      always() && (
+        contains(join(needs.*.result, ','), 'failure')
+        || !contains(join(needs.*.result, ','), 'cancelled')
+      )
+    steps:
+      - name: Verify that there were no failures
+        run: ${{ !contains(join(needs.*.result, ','), 'failure') }}

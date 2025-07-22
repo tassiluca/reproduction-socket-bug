@@ -1,0 +1,22 @@
+# Target
+target
+
+# BSP
+.bsp
+
+# Metals
+/project/**/metals.sbt
+/.bloop
+/.metals
+
+# Bloop
+.bloop/
+
+# IDEs
+/.idea
+/.vscode
+
+node_modules/
+
+# macOS
+.DS_Store
