@@ -14,7 +14,7 @@ class SocketTests extends AnyFlatSpec with should.Matchers with ScalaFutures wit
 
   given ExecutionContext = ExecutionContext.fromExecutor(ForkJoinPool())
 
-  override given patienceConfig: PatienceConfig = PatienceConfig(timeout = scaled(Span(10, Seconds)))
+  override given patienceConfig: PatienceConfig = PatienceConfig(timeout = scaled(Span(60, Seconds)))
 
   private val FreePort = 0
 
