@@ -19,17 +19,17 @@ class SocketTests extends AnyFlatSpec with should.Matchers with ScalaFutures wit
   private val FreePort = 0
 
   "when blocked on accept and the server is closed" should "throw an exception" in:
-    for i <- 0 until 10 do
+    for _ <- 0 until 10 do
       val acceptStarted = new CountDownLatch(1)
       val serverSocket = new ServerSocket(FreePort)
       val serverFuture = Future:
         acceptStarted.countDown()
         serverSocket.accept()
       val started = acceptStarted.await(5, TimeUnit.SECONDS) // wait until accept is about to be called
-      if (!started) then fail("Server socket accept did not start after 5 seconds!")
+      if !started then fail("Server socket accept did not start after 5 seconds!")
       Thread.sleep(1_000) // give some time for the accept to block
       serverFuture.isCompleted shouldBe false
       serverSocket.close()
-      whenReady(serverFuture.failed):
-        _ shouldBe a[java.net.SocketException]
+      eventually(serverSocket.isClosed shouldBe true)
+      eventually(serverFuture.failed.futureValue shouldBe a[java.net.SocketException])
 end SocketTests
