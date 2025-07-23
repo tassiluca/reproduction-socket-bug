@@ -18,7 +18,7 @@ class SocketTests extends AnyFlatSpec with should.Matchers with ScalaFutures wit
 
   private val FreePort = 0
 
-  "when blocked on accept and the server is closed" should "throw an exception" in:
+  "when blocked on accept and the server is closed" should "throw a SocketException" in:
     for _ <- 0 until 10 do
       val acceptStarted = new CountDownLatch(1)
       val serverSocket = new ServerSocket(FreePort)
