@@ -4,7 +4,7 @@ import org.scalatest.concurrent.{ Eventually, ScalaFutures }
 import org.scalatest.concurrent.ScalaFutures.convertScalaFuture
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
-import org.scalatest.time.{ Seconds, Span }
+import org.scalatest.time.{ Seconds, Millis, Span }
 
 import java.net.{ ServerSocket, Socket, InetSocketAddress }
 import java.util.concurrent.{ CountDownLatch, ForkJoinPool, TimeUnit }
@@ -14,7 +14,10 @@ class SocketTests extends AnyFlatSpec with should.Matchers with ScalaFutures wit
 
   given ExecutionContext = ExecutionContext.fromExecutor(ForkJoinPool())
 
-  override given patienceConfig: PatienceConfig = PatienceConfig(timeout = scaled(Span(60, Seconds)))
+  override given patienceConfig: PatienceConfig = PatienceConfig(
+    timeout = scaled(Span(10, Seconds)), 
+    interval = scaled(Span(250, Millis)),
+  )
 
   private val FreePort = 0
 
@@ -26,7 +29,7 @@ class SocketTests extends AnyFlatSpec with should.Matchers with ScalaFutures wit
       endpoint.isUnresolved() shouldBe false
       val clientFuture = Future:
         acceptStarted.countDown()
-        client.connect(endpoint, 20_000)
+        client.connect(endpoint, 30_000)
       val started = acceptStarted.await(5, TimeUnit.SECONDS) // wait until connect is about to be called
       if !started then fail("Client socket connect did not start after 5 seconds!")
       Thread.sleep(1_000) // give some time for the connect to block
@@ -34,7 +37,7 @@ class SocketTests extends AnyFlatSpec with should.Matchers with ScalaFutures wit
       client.isConnected shouldBe false
       client.close()
       eventually(client.isClosed shouldBe true)
-      eventually(clientFuture.failed.futureValue shouldBe a[java.net.SocketException])
+      clientFuture.failed.futureValue shouldBe a[java.net.SocketException]
 
   "when blocked on accept and the server is closed" should "throw a SocketException" in:
     for _ <- 0 until 10 do
@@ -49,6 +52,6 @@ class SocketTests extends AnyFlatSpec with should.Matchers with ScalaFutures wit
       serverFuture.isCompleted shouldBe false
       serverSocket.close()
       eventually(serverSocket.isClosed shouldBe true)
-      eventually(serverFuture.failed.futureValue shouldBe a[java.net.SocketException])
+      serverFuture.failed.futureValue shouldBe a[java.net.SocketException]
 
 end SocketTests
